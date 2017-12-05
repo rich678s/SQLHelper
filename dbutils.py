@@ -39,14 +39,23 @@ class DBInstance(object):
         print(ret[len(link) + 1:])
         return ret[len(link) + 1:]
 
-    def exec_commit(self, sql):
+    def exec_commit_single(self, sql):
         try:
             self.cursor.execute(sql)
             self.db.commit()
             print('sql is : %s' % sql)
         except Exception as e:
             print('excute error sql:%s : %s ' % (sql, e))
-        # pass
+
+    def exec_commit_bash(self, sqls):
+        try:
+            for sql in sqls:
+                self.cursor.execute(sql)
+            self.db.commit()
+            print('sql is : %s' % sql)
+        except Exception as e:
+            print('excute error sql:%s : %s ' % (sql, e))
+            self.db.rollback()
 
     def query_record(self, tname):
         """查询全表所有信息，传入表名"""
@@ -72,7 +81,7 @@ class DBInstance(object):
         else:
             columns = self.tostring(columns)
             sql = "INSERT INTO %s (%s) VALUES %s" % (tname, columns, values)
-        self.exec_commit(sql)
+        self.exec_commit_single(sql)
 
     # def update_record(self, tname, condition, result):
     #     """表名，条件，赋值"""
@@ -80,7 +89,7 @@ class DBInstance(object):
     #         sql = 'update %s set %s' % (tname, result)
     #     else:
     #         sql = 'update %s set %s where %s' % (tname, result, condition)
-    #     self.exec_commit(sql)
+    #     self.exec_commit_single(sql)
 
     def update_record1(self, tname, condition={}, result={}, columns_type={}):
         """表名，条件，赋值, 数据类型（指定操作列的数据类型）"""
@@ -88,12 +97,12 @@ class DBInstance(object):
             sql = 'update %s set %s' % (tname, self.dict_tostring(result))
         else:
             sql = 'update %s set %s where %s' % (tname, self.dict_tostring(result, columns_type), self.dict_tostring(condition, columns_type, link='and'))
-        self.exec_commit(sql)
+        self.exec_commit_single(sql)
 
     def del_record(self, tname, condition={}, columns_type={}):
         """表名，条件"""
         sql = 'delete from %s where %s' % (tname, self.dict_tostring(condition, columns_type, link='and'))
-        self.exec_commit(sql)
+        self.exec_commit_single(sql)
 
     def __del__(self):
         """关闭数据库连接"""
